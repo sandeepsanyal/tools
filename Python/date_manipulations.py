@@ -37,9 +37,15 @@ def last_sunday(
 
     # obtain last sunday date of current date, if current date is sunday return as it is
     temp_df[sunday_date_column_name] = temp_df.apply(
-        lambda x: x[date_column_name] - timedelta(days=x[date_column_name].weekday() + 1)
+        lambda x: (
+                x[date_column_name] -
+                timedelta(
+                    days=x[date_column_name].weekday() + 1
+                )
+        )
         if x[date_column_name].weekday() != 6
-        else x[date_column_name], axis=1
+        else x[date_column_name],
+        axis=1
     )
 
     return temp_df

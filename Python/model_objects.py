@@ -34,9 +34,14 @@ def vif(
 
     # calculating VIF and converting result to a DataFrame
     vif = pd.DataFrame()
-    vif["VIF"] = [variance_inflation_factor(X.values, i) for i in range(X.shape[1])]
+    vif["VIF"] = [
+        variance_inflation_factor(X.values, i) for i in range(X.shape[1])
+    ]
     vif["Variable"] = X.columns
-    vif = vif.loc[vif['Variable'] != 'const', ["Variable", "VIF"]].reset_index(drop=True)
+    vif = vif.loc[
+        vif['Variable'] != 'const',
+        ["Variable", "VIF"]
+    ].reset_index(drop=True)
     vif.sort_values(
         by=["VIF"],
         ascending=False,
@@ -86,93 +91,165 @@ def model_accuracies(
     return dict(
         {
             'MAE': round(
-                number=stat.mean(np.absolute(temp_df[dep_var] - temp_df['predicted'])),
+                number=stat.mean(
+                    np.absolute(
+                        temp_df[dep_var] -
+                        temp_df['predicted']
+                    )
+                ),
                 ndigits=2
             ),
             'MAPE': round(
-                number=stat.mean((np.absolute(temp_df[dep_var] - temp_df['predicted']) / temp_df['predicted'])*100),
+                number=stat.mean(
+                    (
+                            np.absolute(temp_df[dep_var] -
+                                        temp_df['predicted']
+                                        ) /
+                            temp_df['predicted']
+                    ) * 100
+                ),
                 ndigits=2
             ),
             'WMAPE': round(
-                number=(np.sum(np.absolute(temp_df[dep_var] - temp_df['predicted'])) / np.sum(temp_df[dep_var])) * 100,
+                number=(
+                               np.sum(
+                                   np.absolute(
+                                       temp_df[dep_var] -
+                                       temp_df['predicted']
+                                   )
+                               ) /
+                               np.sum(
+                                   temp_df[dep_var]
+                               )
+                       ) * 100,
                 ndigits=2
             )
         }
     )
 
-def model_results(model, train_data, test_data, indep_vars, dep_var, transform_dep_var = None, export_path = None):
+def model_results(
+        model,
+        train_data: pd.core.frame.DataFrame,
+        test_data: pd.core.frame.DataFrame,
+        indep_vars: list,
+        dep_var: str,
+        export_path: str = None):
 
     try:
-        temp = pd.read_excel(io=export_path, sheet_name="Sheet1")
+        temp = pd.read_excel(
+            io=export_path,
+            sheet_name="Sheet1",
+            na_values=['#NA','#N/A','',' ','na','NA']
+        )
         iter = temp['Iteration Number'].max()+1
     except:
         iter = 1
 
-    result_table = pd.merge(left=pd.DataFrame({'Iteration Number':iter,
-                                               'Variable':model.params.index,
-                                               'Estimate':model.params}),
-                            right=pd.DataFrame({'Variable':model.pvalues.index,
-                                                'p-value':model.pvalues}),
-                            how='left',
-                            left_on='Variable',
-                            right_on='Variable')
-    result_table = pd.merge(left=result_table,
-                            right=pd.DataFrame({'Variable': model.tvalues.index,
-                                                't-value': model.tvalues}),
-                            how='left',
-                            left_on='Variable',
-                            right_on='Variable')
-    result_table = pd.merge(left=result_table,
-                            right=vif(X=train_data[indep_vars]),
-                            how='left',
-                            left_on='Variable',
-                            right_on='Variable')
+    result_table = pd.merge(left=pd.DataFrame(
+        {
+            'Iteration Number': iter,
+            'Variable': model.params.index,
+            'Estimate': model.params
+        }
+    ),
+        right=pd.DataFrame(
+            {
+                'Variable': model.pvalues.index,
+                'p-value':model.pvalues
+            }
+        ),
+        how='left',
+        left_on='Variable',
+        right_on='Variable'
+    )
+    result_table = pd.merge(
+        left=result_table,
+        right=pd.DataFrame(
+            {
+                'Variable': model.tvalues.index,
+                't-value': model.tvalues
+            }
+        ),
+        how='left',
+        left_on='Variable',
+        right_on='Variable'
+    )
+    result_table = pd.merge(
+        left=result_table,
+        right=vif(
+            X=train_data[indep_vars]
+        ),
+        how='left',
+        left_on='Variable',
+        right_on='Variable'
+    )
     result_table['Adj R-sq'] = model.rsquared_adj
-    result_table['Train MAE'] = model_accuracies(df=train_data,
-                           dep_var=dep_var,
-                           indep_vars=indep_vars,
-                           model=model,
-                           transform_dep_var=transform_dep_var)['MAE']
-    result_table['Train MAPE'] = model_accuracies(df=train_data,
-                           dep_var=dep_var,
-                           indep_vars=indep_vars,
-                           model=model,
-                           transform_dep_var=transform_dep_var)['MAPE']/100
-    result_table['Train WMAPE'] = model_accuracies(df=train_data,
-                           dep_var=dep_var,
-                           indep_vars=indep_vars,
-                           model=model,
-                           transform_dep_var=transform_dep_var)['WMAPE']/100
-    result_table['Test MAE'] = model_accuracies(df=test_data,
-                           dep_var=dep_var,
-                           indep_vars=indep_vars,
-                           model=model,
-                           transform_dep_var=transform_dep_var)['MAE']
-    result_table['Test MAPE'] = model_accuracies(df=test_data,
-                           dep_var=dep_var,
-                           indep_vars=indep_vars,
-                           model=model,
-                           transform_dep_var=transform_dep_var)['MAPE']/100
-    result_table['Test WMAPE'] = model_accuracies(df=test_data,
-                           dep_var=dep_var,
-                           indep_vars=indep_vars,
-                           model=model,
-                           transform_dep_var=transform_dep_var)['WMAPE']/100
+    result_table['Train MAE'] = model_accuracies(
+        df=train_data,
+        dep_var=dep_var,
+        indep_vars=indep_vars,
+        model=model
+    )['MAE']
+    result_table['Train MAPE'] = (
+                                     model_accuracies(
+                                         df=train_data,
+                                         dep_var=dep_var,
+                                         indep_vars=indep_vars,
+                                         model=model
+                                     )['MAPE']
+                                 ) / 100
+    result_table['Train WMAPE'] = (
+                                      model_accuracies(
+                                          df=train_data,
+                                          dep_var=dep_var,
+                                          indep_vars=indep_vars,
+                                          model=model
+                                      )['WMAPE']
+                                  ) / 100
+    result_table['Test MAE'] = model_accuracies(
+        df=test_data,
+        dep_var=dep_var,
+        indep_vars=indep_vars,
+        model=model
+    )['MAE']
+    result_table['Test MAPE'] = (
+                                        model_accuracies(
+                                            df=test_data,
+                                            dep_var=dep_var,
+                                            indep_vars=indep_vars,
+                                            model=model
+                                        )['MAPE']
+                                ) / 100
+    result_table['Test WMAPE'] = (
+                                     model_accuracies(
+                                         df=test_data,
+                                         dep_var=dep_var,
+                                         indep_vars=indep_vars,
+                                         model=model
+                                     )['WMAPE']
+                                 ) / 100
     print(iter)
-    if export_path != None:
+    if type(export_path) == str:
         if iter > 1:
-            result_table = pd.concat([temp,
-                                      result_table],
-                                     axis=0)
+            result_table = pd.concat(
+                [
+                    temp,
+                    result_table
+                 ],
+                axis=0)
         else:
             None
-        with pd.ExcelWriter(path=export_path,
-                            mode='w',
-                            date_format='YYYY-MM-DD',
-                            datetime_format='DD-MMM-YYYY') as writer:
-            result_table.to_excel(excel_writer=writer,
-                                  index=False,
-                                  sheet_name='Sheet1',
-                                  engine='openpyxl')
+        with pd.ExcelWriter(
+                path=export_path,
+                mode='w',
+                date_format='YYYY-MM-DD',
+                datetime_format='DD-MMM-YYYY'
+        ) as writer:
+            result_table.to_excel(
+                excel_writer=writer,
+                index=False,
+                sheet_name='Sheet1',
+                engine='openpyxl'
+            )
 
     return result_table
