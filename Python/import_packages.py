@@ -13,6 +13,7 @@ packages = [
 	"statsmodels",
 	"scipy",
 	"scikit-learn",
+	"tqdm",
 	"notebook"
 ]
 
