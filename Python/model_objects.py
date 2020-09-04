@@ -2,12 +2,12 @@
 import numpy as np
 import pandas as pd
 import statistics as stat
-import statsmodels.api as sm
 from statsmodels.stats.outliers_influence import variance_inflation_factor
-
+from tqdm import tqdm
 
 def vif(
-        X: pd.core.frame.DataFrame
+        X: pd.core.frame.DataFrame,
+        const: str = None
 ) -> pd.core.frame.DataFrame:
     """
     Calculates variance inflation factor (VIF), for all variables
@@ -19,8 +19,11 @@ def vif(
 
     Parameters
     ----------
-    X : Pandas DataFrame
+    X: Pandas DataFrame
         Design matrix with all explanatory variables, as for example used in regression
+    const: string
+        Column name containing values = 1 (Intercept Variable)
+        If const is present, it should be a part of X
 
     Returns
     -------
@@ -28,28 +31,24 @@ def vif(
         Variance inflation factor
     """
 
-    # checking for intercept term. If not, adding intercept
-    if 'const' not in X.columns.values.tolist():
-        X = sm.add_constant(X)
-
     # calculating VIF and converting result to a DataFrame
     vif = pd.DataFrame()
     vif["VIF"] = [
-        variance_inflation_factor(X.values, i) for i in range(X.shape[1])
+        variance_inflation_factor(X.values, i) for i in tqdm(range(X.shape[1]))
     ]
     vif["Variable"] = X.columns
-    vif = vif.loc[
-        vif['Variable'] != 'const',
-        ["Variable", "VIF"]
-    ].reset_index(drop=True)
-    vif.sort_values(
+    if const is not None:
+        vif = vif.loc[
+            vif['Variable'] != const,
+            ["Variable", "VIF"]
+        ].reset_index(drop=True)
+    else:
+        vif = vif[["Variable", "VIF"]].reset_index(drop=True)
+    vif = vif.sort_values(
         by=["VIF"],
-        ascending=False,
-        inplace=True
-    )
-    vif.reset_index(
-        drop=True,
-        inplace=True
+        ascending=False
+    ).reset_index(
+        drop=True
     )
 
     return vif
