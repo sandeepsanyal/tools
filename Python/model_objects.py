@@ -29,7 +29,7 @@ def vif(
     """
 
     # checking for intercept term. If not, adding intercept
-    if 'const' in X.columns.values.tolist():
+    if 'const' not in X.columns.values.tolist():
         X = sm.add_constant(X)
 
     # calculating VIF and converting result to a DataFrame

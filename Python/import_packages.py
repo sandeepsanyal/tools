@@ -19,6 +19,6 @@ packages = [
 
 for package in packages:
 	call(  # update all packages in shell
-	    "pip install " + package,
-	    shell=True
+		"pip install " + package,
+		shell=True
 	)

@@ -30,7 +30,6 @@ def last_sunday(
         infer_datetime_format=True,
         errors="coerce"
     )
-
     # obtain last sunday date of current date, if current date is sunday return as it is
     temp_df[sunday_date_column_name] = (
             temp_df[date_column_name] -
