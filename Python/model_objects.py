@@ -3,11 +3,12 @@ import numpy as np
 import pandas as pd
 import statistics as stat
 from statsmodels.stats.outliers_influence import variance_inflation_factor
+import statsmodels.regression.linear_model
 from tqdm import tqdm
 
 def vif(
         X: pd.core.frame.DataFrame,
-        const: str = None
+        const: str = 'const'
 ) -> pd.core.frame.DataFrame:
     """
     Calculates variance inflation factor (VIF), for all variables
@@ -24,6 +25,10 @@ def vif(
     const: string
         Column name containing values = 1 (Intercept Variable)
         If const is present, it should be a part of X
+        Options are:
+            1) 'const': Default
+            2) None: if no intercept present
+            3) any other column name (as string) containing values = 1
 
     Returns
     -------
@@ -58,29 +63,27 @@ def model_accuracies(
         df: pd.core.frame.DataFrame,
         dep_var: str,
         indep_vars: list,
-        model
-):
+        model: statsmodels.regression.linear_model.RegressionResultsWrapper
+) -> dict:
     """
+    Creates a dictionary of model accuracies (MAE, MAPE, WMAPE)
 
-        Parameters
-        ----------
-        df : Pandas DataFrame
-            design matrix with all explanatory variables, as for example used in regression
+    Parameters
+    ----------
+    df: Pandas DataFrame
+        design matrix with all explanatory variables, as for example used in regression
+    dep_var: string
+        column name of the dependent variable
+    indep_vars: list
+        list of column names of independent variables
+    model: statsmodels object. Type = RegressionResultsWrapper
+        model equation stored in an object
 
-        dep_var : string
-            column name of the dependent variable
-
-        indep_vars : list
-            list of column names of independent variables
-
-        model : statsmodels object. Type = RegressionResultsWrapper
-            model equation stored in an object
-
-        Returns
-        -------
-        A dictionary
-            A dictionary of accuracy metrices like MAE, MAPE & WMAPE
-        """
+    Returns
+    -------
+    A dictionary
+        A dictionary of accuracy metrices like MAE, MAPE & WMAPE
+    """
 
     temp_df = df.copy()
     temp_df['predicted'] = model.predict(
@@ -101,10 +104,10 @@ def model_accuracies(
             'MAPE': round(
                 number=stat.mean(
                     (
-                            np.absolute(temp_df[dep_var] -
-                                        temp_df['predicted']
-                                        ) /
-                            temp_df['predicted']
+                            np.absolute(
+                                temp_df[dep_var] -
+                                temp_df['predicted']
+                            ) / temp_df['predicted']
                     ) * 100
                 ),
                 ndigits=2
@@ -127,62 +130,100 @@ def model_accuracies(
     )
 
 def model_results(
-        model,
+        model: statsmodels.regression.linear_model.RegressionResultsWrapper,
         train_data: pd.core.frame.DataFrame,
         test_data: pd.core.frame.DataFrame,
         indep_vars: list,
         dep_var: str,
-        export_path: str = None):
+        const: str = 'const',
+        export_path: str = None
+) -> pd.core.frame.DataFrame:
+    """
+    Creates a DataFrame of:
+        1) model summary (beta coefficients, p-values, t-values, VIFs), and
+        2) model accuracy (Adj. R-square, MAE, MAPE, WMAPE)
+
+    Parameters
+    ----------
+    model: statsmodels object. Type = RegressionResultsWrapper
+        model equation stored in an object
+    train_data: Pandas DataFrame
+        Training dataset
+    test_data: Pandas DataFrame
+        Test / Validation dataset
+    indep_vars: list
+        list of column names of independent variables
+    dep_var: string
+        column name of the dependent variable
+    const: string
+        column name containing values = 1 (Intercept Variable)
+        If const is present, it should be a part of X
+        Options are:
+            1) 'const': Default
+            2) None: if no intercept present
+            3) any other column name (as string) containing values = 1
+    export_path: string
+        exports model results in an excel file
+        Default: None
+
+    Returns
+    -------
+    Pandas DataFrame
+        A DataFrame of:
+            1) model summary (beta coefficients, p-values, t-values, VIFs), and
+            2) model accuracy (Adj. R-square, MAE, MAPE, WMAPE)
+    """
 
     try:
         temp = pd.read_excel(
             io=export_path,
             sheet_name="Sheet1",
-            na_values=['#NA','#N/A','',' ','na','NA']
+            na_values=['#NA', '#N/A', '', ' ', 'na', 'NA']
         )
-        iter = temp['Iteration Number'].max()+1
+        iteration = temp['Iteration Number'].max() + 1
     except:
-        iter = 1
+        iteration = 1
 
-    result_table = pd.merge(left=pd.DataFrame(
-        {
-            'Iteration Number': iter,
-            'Variable': model.params.index,
-            'Estimate': model.params
-        }
-    ),
-        right=pd.DataFrame(
-            {
-                'Variable': model.pvalues.index,
-                'p-value':model.pvalues
-            }
-        ),
-        how='left',
-        left_on='Variable',
-        right_on='Variable'
-    )
     result_table = pd.merge(
-        left=result_table,
-        right=pd.DataFrame(
-            {
-                'Variable': model.tvalues.index,
-                't-value': model.tvalues
-            }
+        left=pd.merge(
+            left=pd.DataFrame(  # estimates of model parameters
+                {
+                    'Iteration Number': iteration,
+                    'Variable': model.params.index,
+                    'Estimate': model.params
+                }
+            ).reset_index(drop=True),
+            right=pd.DataFrame(  # p-values of model parameters
+                {
+                    'Variable': model.pvalues.index,
+                    'p-value': model.pvalues
+                }
+            ).reset_index(drop=True),
+            how='left',
+            left_on='Variable',
+            right_on='Variable'
+        ),
+        right=pd.merge(
+            left=pd.DataFrame(  # t-values of model parameters
+                {
+                    'Variable': model.tvalues.index,
+                    't-value': model.tvalues
+                }
+            ).reset_index(drop=True),
+            right=vif(  # VIFs of model parameters
+                X=train_data[indep_vars],
+                const=const
+            ),
+            how='left',
+            left_on='Variable',
+            right_on='Variable'
         ),
         how='left',
         left_on='Variable',
         right_on='Variable'
     )
-    result_table = pd.merge(
-        left=result_table,
-        right=vif(
-            X=train_data[indep_vars]
-        ),
-        how='left',
-        left_on='Variable',
-        right_on='Variable'
-    )
-    result_table['Adj R-sq'] = model.rsquared_adj
+    result_table['Adj R-sq'] = model.rsquared_adj  # model Adjusted R-square
+    # model error metrices
     result_table['Train MAE'] = model_accuracies(
         df=train_data,
         dep_var=dep_var,
@@ -212,12 +253,12 @@ def model_results(
         model=model
     )['MAE']
     result_table['Test MAPE'] = (
-                                        model_accuracies(
-                                            df=test_data,
-                                            dep_var=dep_var,
-                                            indep_vars=indep_vars,
-                                            model=model
-                                        )['MAPE']
+                                    model_accuracies(
+                                        df=test_data,
+                                        dep_var=dep_var,
+                                        indep_vars=indep_vars,
+                                        model=model
+                                    )['MAPE']
                                 ) / 100
     result_table['Test WMAPE'] = (
                                      model_accuracies(
@@ -227,16 +268,19 @@ def model_results(
                                          model=model
                                      )['WMAPE']
                                  ) / 100
-    print(iter)
-    if type(export_path) == str:
-        if iter > 1:
+    print("Iteration Number: {}".format(iteration))
+
+    # exporting model results
+    if export_path is not None:  # if export is required
+        if iteration > 1:  # if there is a file at 'export_path' location with previous iterations present
             result_table = pd.concat(
                 [
                     temp,
                     result_table
                  ],
-                axis=0)
-        else:
+                axis=0
+            )
+        else:  # if there is a file at 'export_path' location with no previous iterations present
             None
         with pd.ExcelWriter(
                 path=export_path,
@@ -250,5 +294,7 @@ def model_results(
                 sheet_name='Sheet1',
                 engine='openpyxl'
             )
+    else:  # if export is not required
+        None
 
     return result_table
