@@ -27,13 +27,8 @@ def check_missing_values(
     # calculating percentage of values missing in the DataFrame
     missing_values = pd.DataFrame(
         {
-            'Count Missing': len(df.index),
-            'Percentage Missing': (
-                                          (
-                                                  len(df.index) -
-                                                  df[columns].count()
-                                          ) / len(df.index)
-                                  ) * 100
+            'Count Missing': len(df.index) - df[columns].count(),
+            'Percentage Missing': ((len(df.index) - df[columns].count()) / len(df.index)) * 100
         }
     )
     # sorting percentage missing in descending order
