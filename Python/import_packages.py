@@ -4,7 +4,7 @@ packages = [
     "numpy",
     "pandas",
     "sqlalchemy",
-    "pyodbc"
+    "pyodbc",
     "openpyxl",
     "xlrd",
     "savReaderWriter",
