@@ -21,7 +21,8 @@ packages = [
     "notebook",
     "tensorflow",
     "kmeans",
-    "kmodes"
+    "kmodes",
+    "xgboost"
 ]
 
 for package in packages:
