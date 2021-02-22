@@ -18,6 +18,7 @@ def last_sunday(
         Column name of the DataFrame containing dates
     sunday_date_column_name: String
         Column name of the new last sunday dates
+    
     Returns
     -------
         A DataFrame with last sunday date column
@@ -30,7 +31,7 @@ def last_sunday(
         infer_datetime_format=True,
         errors="coerce"
     )
-    # obtain last sunday date of current date, if current date is sunday return as it is
+    # obtain last sunday date of each dates, if date is sunday return as it is
     temp_df[sunday_date_column_name] = (
             temp_df[date_column_name] -
             pd.TimedeltaIndex(

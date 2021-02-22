@@ -22,7 +22,7 @@ def import_cdn(
         An imported module
 
     Usage:
-    module1 = import_cdn("url/path/to/a_file.py")
+    module1 = import_cdn(url="url/path/to/a_file.py")
     """
     if not name:
         name = os.path.basename(url).lower().rstrip('.py')

@@ -17,12 +17,12 @@ packages = [
     "statsmodels",
     "scipy",
     "scikit-learn",
+    "kmeans",
+    "kmodes",
+    "xgboost",
     "tqdm",
     "notebook",
     "tensorflow",
-    "kmeans",
-    "kmodes",
-    "xgboost"
 ]
 
 for package in packages:

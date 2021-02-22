@@ -11,7 +11,7 @@ packages = [  # list all packages with available latest stable updates
 ]
 
 call(  # update all packages in shell
-    "pip install --upgrade " + " ".join(packages),
+    "python -m pip install --upgrade " + " ".join(packages),
     shell=True
 )
 
