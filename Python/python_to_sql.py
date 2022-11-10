@@ -50,6 +50,7 @@ def to_sql(
     # replace unreadable characters in dataframe
     print("Checking column names for sql support")
     col_names = [x.replace(".", "_") for x in df.columns.values.tolist()]
+    col_names = ['"' + col + '"' for col in col_names]
     df.columns = col_names
     print("Column names for sql support: Checked")
 
