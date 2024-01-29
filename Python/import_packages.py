@@ -23,6 +23,9 @@ packages = [
     "tqdm",
     "notebook",
     "tensorflow",
+    "pyspark",
+    "pyspark[sql]",
+    "pyspark[pandas_on_spark] plotly"
 ]
 
 for package in packages:
