@@ -3,8 +3,6 @@ from subprocess import call
 packages = [
     "numpy",
     "pandas",
-    "sqlalchemy",
-    "pyodbc",
     "openpyxl",
     "xlrd",
     "savReaderWriter",
@@ -24,12 +22,11 @@ packages = [
     "notebook",
     "tensorflow",
     "pyspark",
-    "pyspark[sql]",
-    "pyspark[pandas_on_spark] plotly"
+    "findspark"
 ]
 
 for package in packages:
     call(  # update all packages in shell
-        "pip install " + package,
+        "python3 -m pip install " + package,
         shell=True
     )
