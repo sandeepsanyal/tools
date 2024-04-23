@@ -1,6 +1,7 @@
 from subprocess import call
 
 packages = [
+    "pyarrow",
     "numpy",
     "pandas",
     "openpyxl",
@@ -15,12 +16,10 @@ packages = [
     "statsmodels",
     "scipy",
     "scikit-learn",
-    "kmeans",
-    "kmodes",
     "xgboost",
     "tqdm",
     "notebook",
-    "tensorflow",
+    "pytorch",
     "pyspark",
     "findspark"
 ]
