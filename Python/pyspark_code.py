@@ -1,6 +1,12 @@
-from pyspark.sql import SparkSession
+from pyspark import SparkContext, SparkConf
+sc = SparkContext(conf=SparkConf().setAppName("test").setMaster("local"))
 
-spark = SparkSession.builder.appName('pyspark-by-examples').getOrCreate()
+numbers = list(range(15))
+rdd = sc.parallelize(numbers, 5)
+rdd.glom().collect()
+
+from pyspark.sql import SparkSession
+spark = SparkSession.builder.appName('name_your_app').getOrCreate()
 
 import pyspark.pandas as ps
 
