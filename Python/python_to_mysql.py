@@ -119,7 +119,7 @@ def to_sql(
         col_dat_type = {
             **col_dat_type,
             **{
-                col: [dat_type + dat_len, "NULL"]
+                col: [dat_type + dat_len, ""]
             }
         }
         del dat_type, dat_len
@@ -143,7 +143,7 @@ def to_sql(
     mycursor.execute(
         "CREATE TABLE " +\
         table_name + " ("+\
-        col_dat_type + ")"
+        col_dat_type + ");"
     )
 
    
