@@ -20,16 +20,14 @@ psdf = ps.read_csv(  # reads as a pyspark.pandas.frame.DataFrame
 
 
 # From mysql to pyspark
-from pyspark import sql
 from pyspark.sql import SparkSession
 
 sc = SparkSession.builder \
     .appName('hcdr') \
     .config("spark.jars", "/usr/local/mysql-9.0.1-macos14-arm64/mysql-connector-j-9.0.0/mysql-connector-j-9.0.0.jar") \
     .getOrCreate()
-sqlContext = sql.SQLContext(sc)
 
-source_df = sqlContext.read.format('jdbc').options(  # reads as a pyspark.pandas.frame.DataFrame
+source_df = sc.read.format('jdbc').options(  # reads as a pyspark.pandas.frame.DataFrame
     url='jdbc:mysql://localhost:3306/home_credit_default_risk',
     driver='com.mysql.cj.jdbc.Driver',
     dbtable='application_train',
