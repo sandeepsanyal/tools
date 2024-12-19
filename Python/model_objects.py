@@ -2,13 +2,14 @@
 import numpy as np
 import pandas as pd
 import statistics as stat
+import statsmodels.api as sm
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 import statsmodels.regression.linear_model
 from tqdm import tqdm
 
 def vif(
     X: pd.core.frame.DataFrame,
-    const: str = 'const'
+    const: str = None
 ) -> pd.core.frame.DataFrame:
     """
     Calculates variance inflation factor (VIF), for all variables
@@ -26,8 +27,8 @@ def vif(
         Column name containing values = 1 (Intercept Variable)
         If const is present, it should be a part of X
         Options are:
-            1) 'const': Default
-            2) None: if no intercept present
+            1) None: Default, if no intercept present
+            2) 'const': if intercept is added with sm.add_constant
             3) any other column name (as string) containing values = 1
 
     Returns
@@ -64,7 +65,8 @@ def model_accuracies(
     df: pd.core.frame.DataFrame,
     dep_var: str,
     indep_vars: list,
-    model: statsmodels.regression.linear_model.RegressionResultsWrapper
+    model: statsmodels.regression.linear_model.RegressionResultsWrapper,
+    const: str = None,
 ) -> dict:
     """
     Creates a dictionary of model accuracies (MAE, MAPE, WMAPE)
@@ -79,6 +81,13 @@ def model_accuracies(
         list of column names of independent variables
     model: statsmodels object. Type = RegressionResultsWrapper
         model equation stored in an object
+    const: string
+        Column name containing values = 1 (Intercept Variable)
+        If const is present, it should be a part of X
+        Options are:
+            1) None: Default, if no intercept present
+            2) 'const': if intercept is added with sm.add_constant
+            3) any other column name (as string) containing values = 1
 
     Returns
     -------
@@ -87,10 +96,15 @@ def model_accuracies(
     """
 
     temp_df = df.copy()
-    temp_df['predicted'] = model.predict(
-        exog=temp_df[indep_vars]
-    ).tolist()
-
+    if const is not None:
+        temp_df['predicted'] = model.predict(
+            exog=sm.add_constant(temp_df[indep_vars])
+        ).tolist()
+    else:
+        temp_df['predicted'] = model.predict(
+            exog=temp_df[indep_vars]
+        ).tolist()
+        
     return dict(
         {
             'MAE': round(
@@ -126,7 +140,7 @@ def model_results(
     test_data: pd.core.frame.DataFrame,
     indep_vars: list,
     dep_var: str,
-    const: str = 'const',
+    const: str = None,
     export_path: str = None
 ) -> pd.core.frame.DataFrame:
     """
@@ -150,8 +164,8 @@ def model_results(
         column name containing values = 1 (Intercept Variable)
         If const is present, it should be a part of X
         Options are:
-            1) 'const': Default
-            2) None: if no intercept present
+            1) None: Default, if no intercept present
+            2) 'const': if intercept is added with sm.add_constant
             3) any other column name (as string) containing values = 1
     export_path: string
         exports model results in an excel file
@@ -219,37 +233,43 @@ def model_results(
         df=train_data,
         dep_var=dep_var,
         indep_vars=indep_vars,
-        model=model
+        model=model,
+        const=const
     )['MAE']
     result_table['Train MAPE'] = model_accuracies(
         df=train_data,
         dep_var=dep_var,
         indep_vars=indep_vars,
-        model=model
+        model=model,
+        const=const
     )['MAPE'] / 100
     result_table['Train WMAPE'] = model_accuracies(
         df=train_data,
         dep_var=dep_var,
         indep_vars=indep_vars,
-        model=model
+        model=model,
+        const=const
     )['WMAPE'] / 100
     result_table['Test MAE'] = model_accuracies(
         df=test_data,
         dep_var=dep_var,
         indep_vars=indep_vars,
-        model=model
+        model=model,
+        const=const
     )['MAE']
     result_table['Test MAPE'] = model_accuracies(
         df=test_data,
         dep_var=dep_var,
         indep_vars=indep_vars,
-        model=model
+        model=model,
+        const=const
     )['MAPE'] / 100
     result_table['Test WMAPE'] = model_accuracies(
         df=test_data,
         dep_var=dep_var,
         indep_vars=indep_vars,
-        model=model
+        model=model,
+        const=const
     )['WMAPE'] / 100
     print("Iteration Number: {}".format(iteration))
 
