@@ -7,8 +7,8 @@ import statsmodels.regression.linear_model
 from tqdm import tqdm
 
 def vif(
-        X: pd.core.frame.DataFrame,
-        const: str = 'const'
+    X: pd.core.frame.DataFrame,
+    const: str = 'const'
 ) -> pd.core.frame.DataFrame:
     """
     Calculates variance inflation factor (VIF), for all variables
@@ -39,9 +39,11 @@ def vif(
     # calculating VIF and converting result to a DataFrame
     vif = pd.DataFrame()
     vif["VIF"] = [
-        variance_inflation_factor(X.values, i) for i in tqdm(range(X.shape[1]))
+        variance_inflation_factor(X.values, i) \
+        for i in tqdm(range(X.shape[1]))
     ]
     vif["Variable"] = X.columns
+    
     if const is not None:
         vif = vif.loc[
             vif['Variable'] != const,
@@ -49,21 +51,20 @@ def vif(
         ].reset_index(drop=True)
     else:
         vif = vif[["Variable", "VIF"]].reset_index(drop=True)
+    
     vif = vif.sort_values(
         by=["VIF"],
-        ascending=False
-    ).reset_index(
-        drop=True
-    )
+        ascending=[False]
+    ).reset_index(drop=True)
 
     return vif
 
 
 def model_accuracies(
-        df: pd.core.frame.DataFrame,
-        dep_var: str,
-        indep_vars: list,
-        model: statsmodels.regression.linear_model.RegressionResultsWrapper
+    df: pd.core.frame.DataFrame,
+    dep_var: str,
+    indep_vars: list,
+    model: statsmodels.regression.linear_model.RegressionResultsWrapper
 ) -> dict:
     """
     Creates a dictionary of model accuracies (MAE, MAPE, WMAPE)
@@ -94,49 +95,39 @@ def model_accuracies(
         {
             'MAE': round(
                 number=stat.mean(
-                    np.absolute(
-                        temp_df[dep_var] -
-                        temp_df['predicted']
-                    )
+                    np.absolute(temp_df[dep_var] - temp_df['predicted'])
                 ),
                 ndigits=2
             ),
             'MAPE': round(
                 number=stat.mean(
                     (
-                            np.absolute(
-                                temp_df[dep_var] -
-                                temp_df['predicted']
-                            ) / temp_df['predicted']
+                        np.absolute(
+                            temp_df[dep_var] - temp_df['predicted']
+                        ) / temp_df['predicted']
                     ) * 100
                 ),
                 ndigits=2
             ),
             'WMAPE': round(
                 number=(
-                               np.sum(
-                                   np.absolute(
-                                       temp_df[dep_var] -
-                                       temp_df['predicted']
-                                   )
-                               ) /
-                               np.sum(
-                                   temp_df[dep_var]
-                               )
-                       ) * 100,
+                    np.sum(
+                        np.absolute(temp_df[dep_var] - temp_df['predicted'])
+                    ) / np.sum(temp_df[dep_var])
+                ) * 100,
                 ndigits=2
             )
         }
     )
 
 def model_results(
-        model: statsmodels.regression.linear_model.RegressionResultsWrapper,
-        train_data: pd.core.frame.DataFrame,
-        test_data: pd.core.frame.DataFrame,
-        indep_vars: list,
-        dep_var: str,
-        const: str = 'const',
-        export_path: str = None
+    model: statsmodels.regression.linear_model.RegressionResultsWrapper,
+    train_data: pd.core.frame.DataFrame,
+    test_data: pd.core.frame.DataFrame,
+    indep_vars: list,
+    dep_var: str,
+    const: str = 'const',
+    export_path: str = None
 ) -> pd.core.frame.DataFrame:
     """
     Creates a DataFrame of:
@@ -187,14 +178,14 @@ def model_results(
     result_table = pd.merge(
         left=pd.merge(
             left=pd.DataFrame(  # estimates of model parameters
-                {
+                data={
                     'Iteration Number': iteration,
                     'Variable': model.params.index,
                     'Estimate': model.params
                 }
             ).reset_index(drop=True),
             right=pd.DataFrame(  # p-values of model parameters
-                {
+                data={
                     'Variable': model.pvalues.index,
                     'p-value': model.pvalues
                 }
@@ -205,7 +196,7 @@ def model_results(
         ),
         right=pd.merge(
             left=pd.DataFrame(  # t-values of model parameters
-                {
+                data={
                     'Variable': model.tvalues.index,
                     't-value': model.tvalues
                 }
@@ -230,44 +221,36 @@ def model_results(
         indep_vars=indep_vars,
         model=model
     )['MAE']
-    result_table['Train MAPE'] = (
-                                     model_accuracies(
-                                         df=train_data,
-                                         dep_var=dep_var,
-                                         indep_vars=indep_vars,
-                                         model=model
-                                     )['MAPE']
-                                 ) / 100
-    result_table['Train WMAPE'] = (
-                                      model_accuracies(
-                                          df=train_data,
-                                          dep_var=dep_var,
-                                          indep_vars=indep_vars,
-                                          model=model
-                                      )['WMAPE']
-                                  ) / 100
+    result_table['Train MAPE'] = model_accuracies(
+        df=train_data,
+        dep_var=dep_var,
+        indep_vars=indep_vars,
+        model=model
+    )['MAPE'] / 100
+    result_table['Train WMAPE'] = model_accuracies(
+        df=train_data,
+        dep_var=dep_var,
+        indep_vars=indep_vars,
+        model=model
+    )['WMAPE'] / 100
     result_table['Test MAE'] = model_accuracies(
         df=test_data,
         dep_var=dep_var,
         indep_vars=indep_vars,
         model=model
     )['MAE']
-    result_table['Test MAPE'] = (
-                                    model_accuracies(
-                                        df=test_data,
-                                        dep_var=dep_var,
-                                        indep_vars=indep_vars,
-                                        model=model
-                                    )['MAPE']
-                                ) / 100
-    result_table['Test WMAPE'] = (
-                                     model_accuracies(
-                                         df=test_data,
-                                         dep_var=dep_var,
-                                         indep_vars=indep_vars,
-                                         model=model
-                                     )['WMAPE']
-                                 ) / 100
+    result_table['Test MAPE'] = model_accuracies(
+        df=test_data,
+        dep_var=dep_var,
+        indep_vars=indep_vars,
+        model=model
+    )['MAPE'] / 100
+    result_table['Test WMAPE'] = model_accuracies(
+        df=test_data,
+        dep_var=dep_var,
+        indep_vars=indep_vars,
+        model=model
+    )['WMAPE'] / 100
     print("Iteration Number: {}".format(iteration))
 
     # exporting model results
@@ -277,16 +260,16 @@ def model_results(
                 [
                     temp,
                     result_table
-                 ],
+                ],
                 axis=0
             )
         else:  # if there is a file at 'export_path' location with no previous iterations present
             None
         with pd.ExcelWriter(
-                path=export_path,
-                mode='w',
-                date_format='YYYY-MM-DD',
-                datetime_format='DD-MMM-YYYY'
+            path=export_path,
+            mode='w',
+            date_format='YYYY-MM-DD',
+            datetime_format='DD-MMM-YYYY'
         ) as writer:
             result_table.to_excel(
                 excel_writer=writer,
