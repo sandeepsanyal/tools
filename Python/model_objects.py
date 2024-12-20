@@ -137,9 +137,9 @@ def model_accuracies(
 def model_results(
     model: statsmodels.regression.linear_model.RegressionResultsWrapper,
     train_data: pd.core.frame.DataFrame,
-    test_data: pd.core.frame.DataFrame,
     indep_vars: list,
     dep_var: str,
+    test_data: pd.core.frame.DataFrame = None,
     const: str = None,
     export_path: str = None
 ) -> pd.core.frame.DataFrame:
@@ -250,27 +250,33 @@ def model_results(
         model=model,
         const=const
     )['WMAPE'] / 100
-    result_table['Test MAE'] = model_accuracies(
-        df=test_data,
-        dep_var=dep_var,
-        indep_vars=indep_vars,
-        model=model,
-        const=const
-    )['MAE']
-    result_table['Test MAPE'] = model_accuracies(
-        df=test_data,
-        dep_var=dep_var,
-        indep_vars=indep_vars,
-        model=model,
-        const=const
-    )['MAPE'] / 100
-    result_table['Test WMAPE'] = model_accuracies(
-        df=test_data,
-        dep_var=dep_var,
-        indep_vars=indep_vars,
-        model=model,
-        const=const
-    )['WMAPE'] / 100
+    if test_data != None:
+        result_table['Test MAE'] = model_accuracies(
+            df=test_data,
+            dep_var=dep_var,
+            indep_vars=indep_vars,
+            model=model,
+            const=const
+        )['MAE']
+        result_table['Test MAPE'] = model_accuracies(
+            df=test_data,
+            dep_var=dep_var,
+            indep_vars=indep_vars,
+            model=model,
+            const=const
+        )['MAPE'] / 100
+        result_table['Test WMAPE'] = model_accuracies(
+            df=test_data,
+            dep_var=dep_var,
+            indep_vars=indep_vars,
+            model=model,
+            const=const
+        )['WMAPE'] / 100
+    else:
+        result_table['Test MAE'] = np.nan
+        result_table['Test MAPE'] = np.nan
+        result_table['Test WMAPE'] = np.nan
+        
     print("Iteration Number: {}".format(iteration))
 
     # exporting model results
