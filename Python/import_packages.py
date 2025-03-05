@@ -6,9 +6,6 @@ packages = [
     "pandas",
     "openpyxl",
     "xlrd",
-    "savReaderWriter",
-    "pyreadstat",
-    "wheel",
     "bs4",
     "requests",
     "matplotlib",
@@ -18,14 +15,15 @@ packages = [
     "scikit-learn",
     "xgboost",
     "tqdm",
-    "notebook",
-    "pytorch",
+    "torch",
     "pyspark",
-    "findspark"
+    "findspark",
+    "keras",
+    "notebook"
 ]
 
 for package in packages:
     call(  # update all packages in shell
-        "python3 -m pip install " + package,
+        "pip install " + package,
         shell=True
     )
